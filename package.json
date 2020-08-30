@@ -1,0 +1,29 @@
+{
+  "name": "laravel-mix-pace",
+  "version": "0.1.0",
+  "description": "A Laravel Mix extension for Pace support.",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ellgreen/laravel-mix-pace.git"
+  },
+  "keywords": [
+    "laravel",
+    "laravel mix",
+    "mix",
+    "pace"
+  ],
+  "author": "Ellis Green",
+  "license": "MIT",
+  "peerDependencies": {
+    "laravel-mix": "^5.0.5"
+  },
+  "dependencies": {
+    "browser-sync": "^2.26.12",
+    "browser-sync-webpack-plugin": "^2.2.2",
+    "extra-watch-webpack-plugin": "^1.0.3",
+    "node-cmd": "^3.0.0",
+    "tapable": "^1.1.3",
+    "yargs": "^15.4.1"
+  }
+}
