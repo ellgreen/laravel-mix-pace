@@ -25,6 +25,7 @@ class Pace {
         this.bin = this.paceBinary()
 
         this.config = {
+            buildPath: 'build',
             browserSync : true,
             open: true,
             browserSyncOptions: {},
@@ -58,13 +59,14 @@ class Pace {
 
     pacePlugin() {
         let bin = this.bin
+        let buildPath = this.config.buildPath
 
         return new class {
             apply(compiler) {
                 compiler.hooks.paceDone = new SyncHook([])
 
                 compiler.hooks.done.tap('Pace Webpack Plugin', () => {
-                    return command.get(`php ${bin} build`, (error, stdout, stderr) => {
+                    return command.get(`php ${bin} build ${buildPath}`, (error, stdout, stderr) => {
                         console.log(error ? stderr : stdout)
 
                         if (browserSyncInstance) {
