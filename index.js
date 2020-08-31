@@ -87,7 +87,7 @@ class Pace {
             notify: false,
             open: this.config.open,
             port: this.port,
-            server: { baseDir: 'public' },
+            server: { baseDir: 'build' },
             ...this.config.browserSyncOptions,
         }, {
             reload: false,
