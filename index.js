@@ -9,18 +9,16 @@ const ExtraWatchWebpackPlugin = require('extra-watch-webpack-plugin')
 const BrowserSync = require('browser-sync')
 const BrowserSyncPlugin = require('browser-sync-webpack-plugin')
 
-const { SyncHook } = require('tapable')
-
 /**
  * Pace laravel-mix plugin
  * derived from the laravel-mix-jigsaw plugin
  */
 
-let browserSyncInstance;
+let browserSyncInstance
 
 class Pace {
     register(config = {}) {
-        this.port = argv.port || 3000;
+        this.port = 3000
 
         this.bin = this.paceBinary()
 
@@ -32,6 +30,7 @@ class Pace {
             watch: {
                 files: [
                     'resources/views/**/*.blade.php',
+                    'resources/views/**/*.md',
                 ],
             },
             ...config,
@@ -63,18 +62,8 @@ class Pace {
 
         return new class {
             apply(compiler) {
-                compiler.hooks.paceDone = new SyncHook([])
-
-                compiler.hooks.done.tap('Pace Webpack Plugin', () => {
-                    return command.get(`php ${bin} build ${buildPath}`, (error, stdout, stderr) => {
-                        console.log(error ? stderr : stdout)
-
-                        if (browserSyncInstance) {
-                            browserSyncInstance.reload()
-                        }
-
-                        compiler.hooks.paceDone.call()
-                    })
+                compiler.afterCompile.tap('PaceWebpackPlugin', () => {
+                    console.log('testing')
                 })
             }
         }
@@ -98,4 +87,4 @@ class Pace {
     }
 }
 
-mix.extend('pace', new Pace)
+mix.extend('pace', new Pace())
