@@ -1,6 +1,6 @@
 const mix = require('laravel-mix')
 
-const argv = require('yargs').argv;
+const argv = require('yargs').argv
 const command = require('node-cmd')
 const fs = require('fs')
 const path = require('path')
