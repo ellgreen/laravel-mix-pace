@@ -1,90 +1,55 @@
+// Heavily inspired by https://github.com/tighten/laravel-mix-jigsaw
+
 const mix = require('laravel-mix')
+const { exec } = require('child_process')
+const { resolve } = require('path')
+const glob = require('glob')
 
-const argv = require('yargs').argv
-const command = require('node-cmd')
-const fs = require('fs')
-const path = require('path')
+const watch = ({ files, dirs, notDirs }) => (compilation, callback) => {
+    files.flatMap(pattern => glob.sync(pattern))
+        .map(file => compilation.fileDependencies.add(resolve(file)));
+    dirs.flatMap(pattern => glob.sync(pattern))
+        .filter(dir => !notDirs.includes(dir))
+        .map(dir => compilation.contextDependencies.add(resolve(dir)));
+    callback()
+}
 
-const ExtraWatchWebpackPlugin = require('extra-watch-webpack-plugin')
-const BrowserSync = require('browser-sync')
-const BrowserSyncPlugin = require('browser-sync-webpack-plugin')
+mix.extend('pace', new class {
+    config = {
+        buildPath: 'build',
+        watch: {
+            files: [
+                'resources/views/**/*.blade.php',
+                'resources/views/**/*.md',
+            ],
+            dirs: ['resources/*/'],
+            notDirs: [],
+        },
+    }
 
-/**
- * Pace laravel-mix plugin
- * derived from the laravel-mix-jigsaw plugin
- */
-
-let browserSyncInstance
-
-class Pace {
     register(config = {}) {
-        this.port = 3000
+        Array.isArray(config.watch)
+            ? this.config.watch.files.push(...config.watch)
+            : this.config.watch = { ...this.config.watch, ...config.watch }
 
-        this.bin = this.paceBinary()
-
-        this.config = {
-            buildPath: 'build',
-            browserSync : true,
-            open: true,
-            browserSyncOptions: {},
-            watch: {
-                files: [
-                    'resources/views/**/*.blade.php',
-                    'resources/views/**/*.md',
-                ],
-            },
-            ...config,
+        if (config.buildPath) {
+            this.config.buildPath = config.buildPath
         }
     }
 
     webpackPlugins() {
-        return [
-            this.pacePlugin(),
-            this.watchPlugin(),
-            this.config.browserSync ? this.browserSyncPlugin() : undefined
-        ].filter(plugin => plugin)
-    }
+        const watchConfig = this.config.watch
+        const buildPath = this.config.buildPath
 
-    paceBinary() {
-        let pathToBinary = path.normalize('./pace')
-
-        if (fs.existsSync(pathToBinary)) {
-            return pathToBinary
-        }
-
-        console.error('Could not find Pace binary')
-        process.exit()
-    }
-
-    pacePlugin() {
-        let bin = this.bin
-        let buildPath = this.config.buildPath
-
-        return new class {
+        return [new class {
             apply(compiler) {
-                compiler.afterCompile.tap('PaceWebpackPlugin', () => {
-                    console.log('testing')
+                compiler.hooks.afterCompile.tapAsync('PaceWatchPlugin', watch(watchConfig))
+                compiler.hooks.afterDone.tap('PaceBuildPlugin', () => {
+                    exec(`php pace build ${buildPath}`, (error, stdout, stderr) => {
+                        error ? console.warn(`Error building Pace site:\n${stderr}`) : console.log(stdout)
+                    })
                 })
             }
-        }
+        }]
     }
-
-    watchPlugin() {
-        return new ExtraWatchWebpackPlugin(this.config.watch)
-    }
-
-    browserSyncPlugin() {
-        return new BrowserSyncPlugin({
-            notify: false,
-            open: this.config.open,
-            port: this.port,
-            server: { baseDir: 'build' },
-            ...this.config.browserSyncOptions,
-        }, {
-            reload: false,
-            callback: () => browserSyncInstance = BrowserSync.get('bs-webpack-plugin'),
-        });
-    }
-}
-
-mix.extend('pace', new Pace())
+})
